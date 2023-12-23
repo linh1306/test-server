@@ -1,34 +1,41 @@
 const express = require('express');
 const axios = require('axios');
-const bodyParser = require('body-parser');
+const multer = require('multer');
+const FormData = require('form-data');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+app.use(cors());
 
-app.post('/', async (req, res) => {
-  const inputData = req.body;
-  const data = {
-    "key": "e3c9be8a60dfcddf028d8261b265114b",
-    "token": "ATTA202fea308de0c7eb62c8b711a64441deeea454c02e8b01954e261f9f56908a5a38DF27DA",
-    "idList": "6581457631dc4371ad36bb24",
-    "name": inputData.name,
-    "desc": inputData.desc,
-    "fileSource": inputData.fileSource
-  }
-  res.json(inputData);
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
-  axios.post("https://api.trello.com/1/cards", data)
-    .then(response => {
-      res.json(response);
-    })
-    .catch(error => {
-      console.error('Error:', error.message);
-      res.status(500).json({ error: 'Internal Server Error' });
+app.post('/', upload.single('fileSource'), async (req, res) => {
+  try {
+    const file = req.file;
+    const data = req.body;
+    const trelloForm = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      trelloForm.append(key, value);
     });
+    if (file) {
+      trelloForm.append('fileSource', file.buffer, { filename: file.originalname });
+    }
+    const trelloResponse = await axios.post("https://api.trello.com/1/cards", trelloForm, {
+      headers: {
+        ...trelloForm.getHeaders(),
+      },
+    });
+    const trelloResult = trelloResponse.data;
+    res.json(trelloResult);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
