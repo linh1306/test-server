@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Client Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .chat-container {
+      border: 1px solid #ccc;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .message-list {
+      list-style-type: none;
+      padding: 0;
+    }
+    .message-list li {
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <h2>Socket.IO Chat</h2>
+    <div id="room-info"></div>
+    <ul class="message-list" id="message-list"></ul>
+    <div class="form-group">
+      <input type="text" id="room-input" placeholder="Enter room name">
+      <button id="join-room-btn">Join Room</button>
+    </div>
+    <div class="form-group">
+      <input type="text" id="message-input" placeholder="Type your message">
+      <button id="send-message-btn">Send</button>
+    </div>
+    <div class="form-group">
+      <button id="create-room-btn">Create Room</button>
+    </div>
+  </div>
+  <script type="module">
+    import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+
+    const socket = io('ws://profound-iguana-linh-d53433e8.koyeb.app/');
+
+    // Function to send a chat message
+    function sendMessage() {
+      const messageInput = document.getElementById('message-input');
+      const message = messageInput.value.trim();
+      if (message !== '') {
+        socket.emit('chatMessage', { room: currentRoom, message });
+        messageInput.value = '';
+      }
+    }
+
+    // Listen for chat messages from server
+    socket.on('chatMessage', (message) => {
+      const messageList = document.getElementById('message-list');
+      const li = document.createElement('li');
+      li.textContent = message;
+      messageList.appendChild(li);
+    });
+
+    // Function to handle room creation (prompt input)
+    function createRoomPrompt() {
+      const roomName = prompt('Enter room name:');
+      if (roomName) {
+        socket.emit('createRoom', roomName);
+      }
+    }
+
+    // Function to handle joining a room
+    function joinRoom() {
+      const roomName = document.getElementById('room-input').value.trim();
+      if (roomName !== '') {
+        socket.emit('joinRoom', roomName);
+      }
+    }
+
+    // Listen for room created event
+    socket.on('roomCreated', (roomName) => {
+      document.getElementById('room-info').textContent = `Joined room: ${roomName}`;
+      currentRoom = roomName;
+    });
+
+    // Initially join a room (you may adjust this based on your app logic)
+    let currentRoom = 'default'; // Default room
+    socket.emit('joinRoom', currentRoom);
+
+    // Add event listeners after DOM content is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+      document.getElementById('create-room-btn').addEventListener('click', createRoomPrompt);
+      document.getElementById('join-room-btn').addEventListener('click', joinRoom);
+    });
+  </script>
+</body>
+
+</html>
