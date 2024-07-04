@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chatMessage', (data) => {
-    io.to(data.room).emit('chatMessage', data.message);
+    io.to(data.room).emit('chatMessage', data);
   });
 });
 server.listen(3000, () => {
