@@ -1,18 +1,7 @@
-import { match } from 'assert';
-import mongoose, { Schema } from 'mongoose';
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-export interface IGroupChat {
-  _id?: string;
-  _admin?: string | null;
-  _users: string[];
-  name?: string | null;
-  type_group?: 'many_people' | 'two_people';
-  url_image?: string | null;
-  is_private?: boolean,
-  last_msg_time?: Date
-}
-
-const GroupChatSchema: Schema = new Schema({
+const GroupChatSchema = new Schema({
   _admin: {
     type: mongoose.Types.ObjectId,
     default: null,
@@ -21,7 +10,7 @@ const GroupChatSchema: Schema = new Schema({
   _users: {
     type: [{ type: Schema.Types.ObjectId, ref: 'Users' }],
     validate: {
-      validator: function (v:any) {
+      validator: function (v) {
         return v.length >= 2
       },
       message: 'The _users array must have at least 2 elements'
@@ -54,7 +43,6 @@ const GroupChatSchema: Schema = new Schema({
   }
 });
 
-const GroupChats = mongoose.models.GroupChats || mongoose.model<IGroupChat>('GroupChats', GroupChatSchema);
+const GroupChats = mongoose.models.GroupChats || mongoose.model('GroupChats', GroupChatSchema);
 
-export default GroupChats;
-
+module.exports = { GroupChats }

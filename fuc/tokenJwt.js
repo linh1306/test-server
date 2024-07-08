@@ -1,12 +1,13 @@
-import jwt from 'jsonwebtoken'
-import Users, { IUsers } from '../schemas/Users'
+const jwt = require('jsonwebtoken');
+const { Users } = require('../schemas/Users');
+require('dotenv').config()
 
-export async function verifyToken(token: string | null) {
+async function verifyToken(token) {
   try {
     if (!token) {
       return { statusToken: false, payloadToken: null }
     }
-    const payloadToken = jwt.verify(token, process.env.KEY_TOKEN!)
+    const payloadToken = jwt.verify(token, process.env.KEY_TOKEN)
     if (typeof payloadToken !== 'string' && payloadToken.exp) {
       const expirationTime = payloadToken.exp;
       const currentTime = Math.floor(Date.now() / 1000);
@@ -15,7 +16,7 @@ export async function verifyToken(token: string | null) {
       }
     }
     if (typeof payloadToken !== 'string') {
-      const res: IUsers | null = await Users.findById(payloadToken._id).lean()
+      const res = await Users.findById(payloadToken._id).lean()
       if (payloadToken.password !== res?.password) {
         return { statusToken: false, payloadToken: null }
       }
@@ -26,3 +27,4 @@ export async function verifyToken(token: string | null) {
   }
 }
 
+module.exports = { verifyToken }

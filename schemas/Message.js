@@ -1,15 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
-
-export interface IMessage {        //người dùng
-  _id?: string;
-  _user?: string;
-  _group_chat?: string;
-  content?: string;
-  url_images?: string[];
-  create_at?: Date;
-}
-
-const MessageSchema: Schema = new Schema({
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+const MessageSchema = new Schema({
   _user: {
     type: mongoose.Types.ObjectId,
     required: true,
@@ -37,7 +28,7 @@ const MessageSchema: Schema = new Schema({
   },
 });
 
-const Message = mongoose.models.Message || mongoose.model<IMessage>('Messages', MessageSchema);
+const Message = mongoose.models.Message || mongoose.model('Messages', MessageSchema);
 
-export default Message;
+module.exports = { Message }
 
