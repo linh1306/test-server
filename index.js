@@ -1,9 +1,8 @@
-// Import các module cần thiết
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const { default: dbConnect } = require('./fuc/mongodb');
+const { dbConnect } = require('./fuc/mongodb');
 const { verifyToken } = require('./fuc/tokenJwt');
 const { default: GroupChats } = require('./schemas/GroupChat');
 const { default: Message } = require('./schemas/Message');
@@ -11,8 +10,13 @@ const { default: Message } = require('./schemas/Message');
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
-dbConnect()
 
+
+const connect = async () => {
+  await dbConnect()
+}
+
+connect()
 const io = require("socket.io")(server, {
   cors: {
     origin: "*",
