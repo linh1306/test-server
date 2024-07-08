@@ -3,10 +3,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const { default: dbConnect } = require('./fuc/mongodb');
+const { verifyToken } = require('./fuc/tokenJwt');
+const { default: GroupChats } = require('./schemas/GroupChat');
+const { default: Message } = require('./schemas/Message');
 
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
+dbConnect()
 
 const io = require("socket.io")(server, {
   cors: {
@@ -17,28 +22,37 @@ const io = require("socket.io")(server, {
   }
 });
 
-
-
 io.on('connection', (socket) => {
-  console.log('Client connected');
-  socket.on('cn', (data) => {
-    console.log('Message from client:', data);
-    io.emit('chat', data);
+  socket.on('createRoom', async (token) => {
+    const { statusToken, payloadToken } = await verifyToken(token)
+    if (!statusToken) return socket.disconnect();
+
+    const groups = await GroupChats.find({
+      _users: payloadToken._id
+    }).select(['_id'])
+
+    groups.forEach(group => {
+      socket.join(group._id);
+    });
+
+    socket.emit('notification', { status: 'true', message: 'kết nối ws thành công' });
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
-  socket.on('createRoom', (roomName) => {
-    socket.join(roomName);
-    console.log(`Socket ${io.id} joined room ${roomName}`);
-    socket.emit('roomCreated', roomName);
-  });
-
-  socket.on('chatMessage', (data) => {
-    io.to(data.room).emit('chatMessage', data);
+  socket.on('chatMessage', async (data) => {
+    const { _user, _group_chat, content, url_images, name } = data
+    const res = await Message.create({
+      _user,
+      _group_chat,
+      content,
+      url_images
+    })
+    if (res) {
+      res.name = name
+      io.to(_group_chat).emit('chatMessage', res);
+    }
   });
 });
+
 server.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });

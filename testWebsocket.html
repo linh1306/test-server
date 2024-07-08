@@ -49,23 +49,41 @@
   <script type="module">
     import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
 
+    // const socket = io('ws://profound-iguana-linh-d53433e8.koyeb.app');
     const socket = io('ws://profound-iguana-linh-d53433e8.koyeb.app/');
+
+    let currentRoom = 'default'; // Default room
+    let username = '';
+
+    // Prompt for username
+    document.addEventListener('DOMContentLoaded', () => {
+      username = prompt('Enter your name:');
+      if (!username) {
+        username = 'Anonymous';
+      }
+      socket.emit('joinRoom', currentRoom);
+      document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+      document.getElementById('create-room-btn').addEventListener('click', createRoomPrompt);
+      document.getElementById('join-room-btn').addEventListener('click', joinRoom);
+    });
 
     // Function to send a chat message
     function sendMessage() {
       const messageInput = document.getElementById('message-input');
       const message = messageInput.value.trim();
       if (message !== '') {
-        socket.emit('chatMessage', { room: currentRoom, message });
+        socket.emit('chatMessage', { room: currentRoom, user: username, message });
+        console.log({ room: currentRoom, user: username, message });
         messageInput.value = '';
       }
     }
 
     // Listen for chat messages from server
-    socket.on('chatMessage', (message) => {
+    socket.on('chatMessage', (data) => {
+      console.log(data);
       const messageList = document.getElementById('message-list');
       const li = document.createElement('li');
-      li.textContent = message;
+      li.textContent = `${data.user}: ${data.message}`;
       messageList.appendChild(li);
     });
 
@@ -89,17 +107,6 @@
     socket.on('roomCreated', (roomName) => {
       document.getElementById('room-info').textContent = `Joined room: ${roomName}`;
       currentRoom = roomName;
-    });
-
-    // Initially join a room (you may adjust this based on your app logic)
-    let currentRoom = 'default'; // Default room
-    socket.emit('joinRoom', currentRoom);
-
-    // Add event listeners after DOM content is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('send-message-btn').addEventListener('click', sendMessage);
-      document.getElementById('create-room-btn').addEventListener('click', createRoomPrompt);
-      document.getElementById('join-room-btn').addEventListener('click', joinRoom);
     });
   </script>
 </body>
